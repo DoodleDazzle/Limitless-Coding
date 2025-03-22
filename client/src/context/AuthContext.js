@@ -10,8 +10,11 @@ import {
   GithubAuthProvider,
   signInWithPopup,
   sendPasswordResetEmail,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
 } from "firebase/auth"
-import { auth } from "../firebase/config"
+import { auth, actionCodeSettings } from "../firebase/config"
 
 const AuthContext = createContext()
 
@@ -53,6 +56,31 @@ export const AuthProvider = ({ children }) => {
     return sendPasswordResetEmail(auth, email)
   }
 
+  const sendEmailLink = async (email) => {
+    try {
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings)
+      window.localStorage.setItem('emailForSignIn', email)
+      return true
+    } catch (error) {
+      console.error(error)
+      return false
+    }
+  }
+
+  const signInWithEmail = async (email, link) => {
+    try {
+      const result = await signInWithEmailLink(auth, email, link)
+      window.localStorage.removeItem('emailForSignIn')
+      return result
+    } catch (error) {
+      throw error
+    }
+  }
+
+  const checkEmailLink = (link) => {
+    return isSignInWithEmailLink(auth, link)
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user)
@@ -70,6 +98,9 @@ export const AuthProvider = ({ children }) => {
     loginWithGithub,
     logout,
     resetPassword,
+    sendEmailLink,
+    signInWithEmail,
+    checkEmailLink,
   }
 
   return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>

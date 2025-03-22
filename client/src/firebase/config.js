@@ -1,8 +1,11 @@
-
-
 import { initializeApp } from "firebase/app"
 import { getAuth } from "firebase/auth"
 import { getFirestore } from "firebase/firestore"
+
+export const actionCodeSettings = {
+  url: process.env.REACT_APP_CONFIRMATION_EMAIL_REDIRECT,
+  handleCodeInApp: true,
+}
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -11,7 +14,7 @@ const firebaseConfig = {
   storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.REACT_APP_FIREBASE_APP_ID,
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 }
 
 // Initialize Firebase

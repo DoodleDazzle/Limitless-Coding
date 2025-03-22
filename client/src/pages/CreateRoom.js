@@ -44,6 +44,12 @@ const CreateRoom = () => {
 
   return (
     <div className="room-page">
+      <div className="home-button-container">
+        <Link to="/" className="home-button">
+          <i className="fas fa-home"></i>
+          Home
+        </Link>
+      </div>
       <div className="room-container">
         <div className="room-logo">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">

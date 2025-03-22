@@ -1,7 +1,19 @@
+:root {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  /* Add other dark theme variables */
+}
+
+[data-theme='light'] {
+  --background: 0 0% 98%;
+  --foreground: 240 10% 3.9%;
+  /* Add other light theme variables */
+}
+
 .landing-page {
   min-height: 100vh;
-  background-color: var(--primary-bg);
-  color: var(--primary-text);
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
   overflow-x: hidden;
 }
 
@@ -21,6 +33,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 0;
+  background-color: hsl(var(--background));
 }
 
 .logo {
@@ -42,7 +55,7 @@
 .theme-toggle {
   background: none;
   border: none;
-  color: var(--primary-text);
+  color: hsl(var(--foreground));
   font-size: 1.2rem;
   cursor: pointer;
   padding: 0.5rem;

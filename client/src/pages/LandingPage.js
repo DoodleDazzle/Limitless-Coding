@@ -3,15 +3,16 @@
 import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
+import { useTheme } from "next-themes"
 import { useAuth } from "../context/AuthContext"
 import "../styles/LandingPage.css"
 
 const LandingPage = () => {
-  const [isLightMode, setIsLightMode] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const { currentUser, logout } = useAuth()
   const navigate = useNavigate()
   const dropdownRef = useRef(null)
+  const { theme, setTheme } = useTheme()
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -28,8 +29,7 @@ const LandingPage = () => {
   }, [dropdownRef])
 
   const toggleTheme = () => {
-    setIsLightMode(!isLightMode)
-    document.body.classList.toggle("light-mode")
+    setTheme(theme === "light" ? "dark" : "light")
   }
 
   const handleCreateRoom = () => {
@@ -80,9 +80,9 @@ const LandingPage = () => {
               <button
                 className="theme-toggle"
                 onClick={toggleTheme}
-                aria-label={isLightMode ? "Switch to dark mode" : "Switch to light mode"}
+                aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
               >
-                {isLightMode ? <i className="fas fa-moon"></i> : <i className="fas fa-sun"></i>}
+                {theme === "light" ? <i className="fas fa-moon"></i> : <i className="fas fa-sun"></i>}
               </button>
 
               {currentUser ? (
@@ -266,7 +266,7 @@ const LandingPage = () => {
                 transition={{ duration: 0.5 }}
               >
                 <p className="testimonial-text">"This platform has revolutionized how our team codes together!"</p>
-                <p className="testimonial-author">- Alex Doe</p>
+                <p className="testimonial-author">- Vishwa Panchal</p>
               </motion.div>
 
               <motion.div
@@ -279,7 +279,7 @@ const LandingPage = () => {
                 <p className="testimonial-text">
                   "The AI suggestions are incredibly helpful and save us tons of time."
                 </p>
-                <p className="testimonial-author">- Jamie Lee</p>
+                <p className="testimonial-author">- Kunj Prajapati</p>
               </motion.div>
 
               <motion.div
@@ -290,7 +290,7 @@ const LandingPage = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
                 <p className="testimonial-text">"Real-time collaboration is seamless. Love it!"</p>
-                <p className="testimonial-author">- Chris Brown</p>
+                <p className="testimonial-author">- Mayur Rathod</p>
               </motion.div>
             </div>
           </div>

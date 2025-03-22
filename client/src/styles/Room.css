@@ -130,6 +130,32 @@
   font-weight: 600;
 }
 
+.home-button-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.home-button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background-color: var(--card-bg);
+  color: var(--primary-text);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  box-shadow: var(--card-shadow);
+}
+
+.home-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow-hover);
+}
+
 @media (max-width: 480px) {
   .room-card {
     padding: 2rem 1.5rem;
