@@ -1,0 +1,79 @@
+.toolbar {
+  height: 60px;
+  background-color: var(--secondary-bg);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.toolbar-left,
+.toolbar-right {
+  flex: 1;
+}
+
+.toolbar-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.toolbar-center {
+  display: flex;
+  gap: 8px;
+}
+
+.room-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.room-label {
+  font-weight: 500;
+  color: var(--secondary-text);
+}
+
+.room-id {
+  font-family: "JetBrains Mono", monospace;
+  background-color: var(--tertiary-bg);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.toolbar-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: var(--tertiary-bg);
+  color: var(--primary-text);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.toolbar-button:hover {
+  background-color: var(--accent-color);
+}
+
+.toolbar-button.active {
+  background-color: var(--accent-color);
+}
+
+.toolbar-button i {
+  font-size: 16px;
+}
+
+.leave-button {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: var(--error-color);
+}
+
+.leave-button:hover {
+  background-color: var(--error-color);
+  color: white;
+}
+

@@ -1,0 +1,29 @@
+.logo-container {
+  margin-bottom: 40px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--primary-text);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.logo:hover {
+  text-decoration: none;
+}
+
+.logo-icon {
+  color: var(--accent-color);
+  margin-right: 8px;
+  font-size: 32px;
+}
+
+.logo-text {
+  background: linear-gradient(90deg, #0078d7, #00b0ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
