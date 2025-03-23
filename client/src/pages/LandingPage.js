@@ -3,16 +3,16 @@
 import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
-import { useTheme } from "next-themes"
 import { useAuth } from "../context/AuthContext"
+import CustomCursor from "../components/CustomCursor"
 import "../styles/LandingPage.css"
 
 const LandingPage = () => {
+  const [isLightMode, setIsLightMode] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const { currentUser, logout } = useAuth()
   const navigate = useNavigate()
   const dropdownRef = useRef(null)
-  const { theme, setTheme } = useTheme()
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -28,23 +28,21 @@ const LandingPage = () => {
     }
   }, [dropdownRef])
 
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light")
-  }
+  // Enable custom cursor
+  useEffect(() => {
+    document.body.classList.add("custom-cursor-active")
 
-  const handleCreateRoom = () => {
-    if (currentUser) {
-      navigate("/create")
-    } else {
-      navigate("/login", { state: { action: "create" } })
+    return () => {
+      document.body.classList.remove("custom-cursor-active")
     }
-  }
+  }, [])
 
-  const handleJoinRoom = () => {
-    if (currentUser) {
-      navigate("/join")
+  const toggleTheme = () => {
+    setIsLightMode(!isLightMode)
+    if (isLightMode) {
+      document.body.classList.remove("light-mode")
     } else {
-      navigate("/login", { state: { action: "join" } })
+      document.body.classList.add("light-mode")
     }
   }
 
@@ -67,8 +65,38 @@ const LandingPage = () => {
     return "U"
   }
 
+  // Blog posts data
+  const blogPosts = [
+    {
+      id: 1,
+      title: "How MultiPlan Transformed R&D Productivity with CodeTogether",
+      excerpt: "When MultiPlan – a leader in healthcare cost management – needed a better work model...",
+      author: "Vishwa Panchal",
+      date: "February 18, 2025",
+      image: "/blog-1.jpg",
+    },
+    {
+      id: 2,
+      title: "The Founding Story of CodeTogether: From Humble Beginnings to Transformative Innovation",
+      excerpt: "Our story began with a team of technologists passionate about improving collaborative...",
+      author: "Kunj Prajapati",
+      date: "January 25, 2025",
+      image: "/blog-2.jpg",
+    },
+    {
+      id: 3,
+      title: "Introducing the New Unified CodeTogether: Enhanced Features and Streamlined Plans!",
+      excerpt: "The CodeTogether Intelligence Suite revolutionizes the software development...",
+      author: "Mayur Rathod",
+      date: "January 10, 2025",
+      image: "/blog-3.jpg",
+    },
+  ]
+
   return (
     <div className="landing-page">
+      <CustomCursor />
+
       <header className="header">
         <div className="container">
           <nav className="navbar">
@@ -80,9 +108,9 @@ const LandingPage = () => {
               <button
                 className="theme-toggle"
                 onClick={toggleTheme}
-                aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+                aria-label={isLightMode ? "Switch to dark mode" : "Switch to light mode"}
               >
-                {theme === "light" ? <i className="fas fa-moon"></i> : <i className="fas fa-sun"></i>}
+                {isLightMode ? <i className="fas fa-moon"></i> : <i className="fas fa-sun"></i>}
               </button>
 
               {currentUser ? (
@@ -147,7 +175,7 @@ const LandingPage = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                 A limitless space for collaborative coding
+                A Limitless Space for Collaborative Coding
               </motion.h1>
 
               <motion.p
@@ -165,91 +193,88 @@ const LandingPage = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
               >
-                <motion.button
-                  className="start-coding-button"
-                  onClick={handleCreateRoom}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
+                <Link to={currentUser ? "/create" : "/login"} className="start-coding-button">
                   <i className="fas fa-code"></i>
                   Create a Room
-                </motion.button>
+                </Link>
 
-                <motion.button
-                  className="join-session-button"
-                  onClick={handleJoinRoom}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
+                <Link to={currentUser ? "/join" : "/login"} className="join-session-button">
                   <i className="fas fa-users"></i>
                   Join a Room
-                </motion.button>
+                </Link>
               </motion.div>
             </motion.div>
           </div>
+
+          {/* Animated background elements */}
+          <div className="hero-background">
+            <div className="floating-element element-1"></div>
+            <div className="floating-element element-2"></div>
+            <div className="floating-element element-3"></div>
+          </div>
         </section>
 
-        <section className="demo-section">
+        <section className="features-section">
           <div className="container">
-            <h2 className="section-title">Try It Yourself</h2>
-            <p className="section-subtitle">Experience real-time collaboration and AI assistance in action.</p>
+            <h2 className="section-title">Powerful Features</h2>
 
-            <motion.div
-              className="editor-preview"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <div className="editor-container">
-                <div className="editor-tabs">
-                  <div className="tab active">App.js</div>
-                  <div className="tab">index.html</div>
+            <div className="features-grid">
+              <motion.div
+                className="feature-card"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="feature-icon">
+                  <i className="fas fa-bolt"></i>
                 </div>
-                <div className="editor-split">
-                  <div className="code-editor">
-                    <pre className="code-content">
-                      <code>
-                        <span className="line-number">1</span> <span className="keyword">import</span>{" "}
-                        <span className="string">"./styles.css"</span>;<br />
-                        <span className="line-number">2</span>
-                        <br />
-                        <span className="line-number">3</span> <span className="keyword">export</span>{" "}
-                        <span className="keyword">default</span> <span className="function">function</span>{" "}
-                        <span className="function-name">App</span>() {"{"}
-                        <br />
-                        <span className="line-number">4</span> <span className="keyword">return</span> (<br />
-                        <span className="line-number">5</span> &lt;<span className="element">div</span>{" "}
-                        <span className="attribute">className</span>=<span className="string">"App"</span>&gt;
-                        <br />
-                        <span className="line-number">6</span> &lt;<span className="element">h1</span>&gt;Hello
-                        CodeSandbox&lt;/<span className="element">h1</span>&gt;
-                        <br />
-                        <span className="line-number">7</span> &lt;<span className="element">h2</span>&gt;Start editing
-                        to see some magic happen!&lt;/<span className="element">h2</span>&gt;
-                        <br />
-                        <span className="line-number">8</span> &lt;/<span className="element">div</span>&gt;
-                        <br />
-                        <span className="line-number">9</span> );
-                        <br />
-                        <span className="line-number">10</span> {"}"}
-                        <br />
-                        <span className="line-number">11</span>
-                      </code>
-                    </pre>
-                  </div>
-                  <div className="preview-pane">
-                    <div className="preview-header">
-                      <div className="preview-url">https://new.csb.app/</div>
-                    </div>
-                    <div className="preview-content">
-                      <h1>Hello CodeSandbox</h1>
-                      <h2>Start editing to see some magic happen!</h2>
-                      <button className="sandbox-button">Open Sandbox</button>
-                    </div>
-                  </div>
+                <h3>Real-time Collaboration</h3>
+                <p>Code together with your team in real-time, seeing changes as they happen.</p>
+              </motion.div>
+
+              <motion.div
+                className="feature-card"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <div className="feature-icon">
+                  <i className="fas fa-robot"></i>
                 </div>
-              </div>
-            </motion.div>
+                <h3>AI Assistance</h3>
+                <p>Get intelligent code suggestions and autocompletions powered by AI.</p>
+              </motion.div>
+
+              <motion.div
+                className="feature-card"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <div className="feature-icon">
+                  <i className="fas fa-shield-alt"></i>
+                </div>
+                <h3>Secure Environment</h3>
+                <p>Your code is protected with enterprise-grade security and encryption.</p>
+              </motion.div>
+
+              <motion.div
+                className="feature-card"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <div className="feature-icon">
+                  <i className="fas fa-chart-line"></i>
+                </div>
+                <h3>Deep Analytics</h3>
+                <p>Gain insights into your coding patterns and team productivity.</p>
+              </motion.div>
+            </div>
           </div>
         </section>
 
@@ -266,7 +291,7 @@ const LandingPage = () => {
                 transition={{ duration: 0.5 }}
               >
                 <p className="testimonial-text">"This platform has revolutionized how our team codes together!"</p>
-                <p className="testimonial-author">- Vishwa Panchal</p>
+                <p className="testimonial-author">- Alex Doe</p>
               </motion.div>
 
               <motion.div
@@ -279,7 +304,7 @@ const LandingPage = () => {
                 <p className="testimonial-text">
                   "The AI suggestions are incredibly helpful and save us tons of time."
                 </p>
-                <p className="testimonial-author">- Kunj Prajapati</p>
+                <p className="testimonial-author">- Jamie Lee</p>
               </motion.div>
 
               <motion.div
@@ -290,7 +315,7 @@ const LandingPage = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
                 <p className="testimonial-text">"Real-time collaboration is seamless. Love it!"</p>
-                <p className="testimonial-author">- Mayur Rathod</p>
+                <p className="testimonial-author">- Chris Brown</p>
               </motion.div>
             </div>
           </div>
@@ -354,6 +379,45 @@ const LandingPage = () => {
                   We use end-to-end encryption and strict security policies to protect your code.
                 </p>
               </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* Blog Section - Added at the end of the landing page */}
+        <section className="blog-section">
+          <div className="container">
+            <div className="blog-header">
+              <h2 className="section-title">Latest blog posts</h2>
+              <Link to="/blog" className="browse-all-button">
+                Browse all Articles <i className="fas fa-arrow-right"></i>
+              </Link>
+            </div>
+
+            <div className="blog-grid">
+              {blogPosts.map((post) => (
+                <motion.div
+                  key={post.id}
+                  className="blog-card"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.1 * post.id }}
+                >
+                  <div className="blog-card-content">
+                    <h3 className="blog-title">{post.title}</h3>
+                  </div>
+                  <div className="blog-meta">
+                    <span className="blog-author">{post.author}</span>
+                    <span className="blog-date">{post.date}</span>
+                  </div>
+                  <p className="blog-excerpt">{post.excerpt}</p>
+                  <div className="blog-footer">
+                    <Link to={`/blog/${post.id}`} className="read-more">
+                      Read Blog <i className="fas fa-arrow-right"></i>
+                    </Link>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
         </section>

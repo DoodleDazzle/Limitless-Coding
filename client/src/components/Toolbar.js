@@ -4,7 +4,16 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import "../styles/Toolbar.css"
 
-const Toolbar = ({ roomId, onRun, onToggleTerminal, onTogglePreview, onLeaveRoom, isTerminalOpen, isPreviewOpen }) => {
+const Toolbar = ({
+  roomId,
+  onRun,
+  onToggleTerminal,
+  onTogglePreview,
+  onLeaveRoom,
+  isTerminalOpen,
+  isPreviewOpen,
+  isRunning,
+}) => {
   const [isCopied, setIsCopied] = useState(false)
 
   const copyRoomId = () => {
@@ -31,9 +40,23 @@ const Toolbar = ({ roomId, onRun, onToggleTerminal, onTogglePreview, onLeaveRoom
       </div>
 
       <div className="toolbar-center">
-        <button className="toolbar-button" onClick={onRun} title="Run Code">
-          <i className="fas fa-play"></i>
-          <span>Run</span>
+        <button
+          className={`toolbar-button ${isRunning ? "loading" : ""}`}
+          onClick={onRun}
+          title="Run Code"
+          disabled={isRunning}
+        >
+          {isRunning ? (
+            <>
+              <i className="fas fa-spinner fa-spin"></i>
+              <span>Running...</span>
+            </>
+          ) : (
+            <>
+              <i className="fas fa-play"></i>
+              <span>Run</span>
+            </>
+          )}
         </button>
 
         <button

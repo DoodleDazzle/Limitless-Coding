@@ -9,9 +9,10 @@ import "../styles/Auth.css"
 const Signup = () => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const { signup, loginWithGoogle, loginWithGithub, currentUser } = useAuth()
+  const { signup, loginWithGoogle, loginWithGithub, currentUser, authError } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -20,8 +21,19 @@ const Signup = () => {
     }
   }, [currentUser, navigate])
 
+  // Set error from auth context
+  useEffect(() => {
+    if (authError) {
+      setError(authError)
+    }
+  }, [authError])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    if (password !== confirmPassword) {
+      return setError("Passwords do not match")
+    }
 
     if (password.length < 6) {
       return setError("Password must be at least 6 characters")
@@ -33,11 +45,11 @@ const Signup = () => {
       await signup(email, password)
       navigate("/create")
     } catch (err) {
-      setError("Failed to create an account")
+      // Error is set from authError in useEffect
       console.error(err)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   const handleGoogleSignUp = async () => {
@@ -47,11 +59,11 @@ const Signup = () => {
       await loginWithGoogle()
       navigate("/create")
     } catch (err) {
-      setError("Failed to sign up with Google")
+      // Error is set from authError in useEffect
       console.error(err)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   const handleGithubSignUp = async () => {
@@ -61,11 +73,11 @@ const Signup = () => {
       await loginWithGithub()
       navigate("/create")
     } catch (err) {
-      setError("Failed to sign up with GitHub")
+      // Error is set from authError in useEffect
       console.error(err)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
@@ -104,8 +116,7 @@ const Signup = () => {
             <button className="social-button github" onClick={handleGithubSignUp} disabled={loading}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
-                  d="M12 2C6.477 2 2 6.477 2 12C2 16.418 4.865 20.166 8.839 21.489C9.339 21.581 9.5 21.278 9.5 21.017C9.5 20.778 9.492 20.055 9.489 19.203C6.728 19.861 6.139 17.875 6.139 17.875C5.684 16.71 5.029 16.408 5.029 16.408C4.139 15.777 5.098 15.79 5.098
- 15.79C6.082 15.859 6.609 16.825 6.609 16.825C7.5 18.39 8.969 17.921 9.52 17.669C9.609 17.023 9.859 16.554 10.134 16.292C7.93 16.027 5.62 15.185 5.62 11.328C5.62 10.226 6.01 9.325 6.629 8.622C6.53 8.375 6.189 7.379 6.729 6.038C6.729 6.038 7.564 5.773 9.477 7.031C10.29 6.812 11.15 6.703 12.004 6.699C12.857 6.703 13.716 6.812 14.531 7.031C16.444 5.773 17.277 6.038 17.277 6.038C17.819 7.379 17.477 8.375 17.379 8.622C17.999 9.325 18.386 10.226 18.386 11.328C18.386 15.196 16.072 16.023 13.859 16.284C14.205 16.608 14.516 17.25 14.516 18.227C14.516 19.602 14.505 20.686 14.505 21.017C14.505 21.281 14.664 21.587 15.173 21.487C19.138 20.161 22 16.416 22 12C22 6.477 17.523 2 12 2Z"
+                  d="M12 2C6.477 2 2 6.477 2 12C2 16.418 4.865 20.166 8.839 21.489C9.339 21.581 9.5 21.278 9.5 21.017C9.5 20.778 9.492 20.055 9.489 19.203C6.728 19.861 6.139 17.875 6.139 17.875C5.684 16.71 5.029 16.408 5.029 16.408C4.139 15.777 5.098 15.79 5.098 15.79C6.082 15.859 6.609 16.825 6.609 16.825C7.5 18.39 8.969 17.921 9.52 17.669C9.609 17.023 9.859 16.554 10.134 16.292C7.93 16.027 5.62 15.185 5.62 11.328C5.62 10.226 6.01 9.325 6.629 8.622C6.53 8.375 6.189 7.379 6.729 6.038C6.729 6.038 7.564 5.773 9.477 7.031C10.29 6.812 11.15 6.703 12.004 6.699C12.857 6.703 13.716 6.812 14.531 7.031C16.444 5.773 17.277 6.038 17.277 6.038C17.819 7.379 17.477 8.375 17.379 8.622C17.999 9.325 18.386 10.226 18.386 11.328C18.386 15.196 16.072 16.023 13.859 16.284C14.205 16.608 14.516 17.25 14.516 18.227C14.516 19.602 14.505 20.686 14.505 21.017C14.505 21.281 14.664 21.587 15.173 21.487C19.138 20.161 22 16.416 22 12C22 6.477 17.523 2 12 2Z"
                   fill="currentColor"
                 />
               </svg>
@@ -160,6 +171,17 @@ const Signup = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <input
+                type="password"
+                id="confirm-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm password"
                 required
               />
             </div>

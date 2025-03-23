@@ -1,7 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
 :root {
-  /* Colors */
+  /* Dark Theme (Default) */
   --primary-bg: #000000;
   --secondary-bg: #111111;
   --tertiary-bg: #1a1a1a;
@@ -28,6 +28,20 @@
   --transition-slow: 0.5s ease;
 }
 
+/* Light Theme */
+body.light-mode {
+  --primary-bg: #ffffff;
+  --secondary-bg: #f8f9fa;
+  --tertiary-bg: #f1f3f5;
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --primary-text: #000000;
+  --secondary-text: rgba(0, 0, 0, 0.7);
+  --border-color: rgba(0, 0, 0, 0.1);
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  --button-shadow: 0 4px 12px rgba(255, 59, 48, 0.2);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -40,6 +54,7 @@ body {
   color: var(--primary-text);
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 button {
@@ -82,11 +97,12 @@ a:hover {
 
 /* Glass effect */
 .glass {
-  background: rgba(30, 30, 30, 0.6);
+  background: var(--card-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border-color);
   border-radius: 16px;
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
 /* Animations */

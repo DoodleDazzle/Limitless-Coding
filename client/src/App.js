@@ -8,7 +8,6 @@ import ForgotPassword from "./pages/ForgotPassword"
 import CreateRoom from "./pages/CreateRoom"
 import JoinRoom from "./pages/JoinRoom"
 import Editor from "./pages/Editor"
-import EmailLinkSignIn from "./pages/EmailLinkSignIn"
 import "./App.css"
 
 function App() {
@@ -45,7 +44,6 @@ function App() {
                 </PrivateRoute>
               }
             />
-            <Route path="/email-link-sign-in" element={<EmailLinkSignIn />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>

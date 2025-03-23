@@ -11,7 +11,7 @@ const Login = () => {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const { login, loginWithGoogle, loginWithGithub, currentUser } = useAuth()
+  const { login, loginWithGoogle, loginWithGithub, currentUser, authError } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const action = location.state?.action || null
@@ -25,6 +25,13 @@ const Login = () => {
       }
     }
   }, [currentUser, navigate, action])
+
+  // Set error from auth context
+  useEffect(() => {
+    if (authError) {
+      setError(authError)
+    }
+  }, [authError])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -40,11 +47,11 @@ const Login = () => {
         navigate("/create")
       }
     } catch (err) {
-      setError("Failed to sign in. Please check your credentials.")
+      // Error is set from authError in useEffect
       console.error(err)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   const handleGoogleSignIn = async () => {
@@ -59,11 +66,11 @@ const Login = () => {
         navigate("/create")
       }
     } catch (err) {
-      setError("Failed to sign in with Google.")
+      // Error is set from authError in useEffect
       console.error(err)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   const handleGithubSignIn = async () => {
@@ -78,11 +85,11 @@ const Login = () => {
         navigate("/create")
       }
     } catch (err) {
-      setError("Failed to sign in with GitHub.")
+      // Error is set from authError in useEffect
       console.error(err)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (

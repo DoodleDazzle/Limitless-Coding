@@ -6,6 +6,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
 .toolbar-left,
@@ -63,6 +64,12 @@
   background-color: var(--accent-color);
 }
 
+.toolbar-button.loading {
+  background-color: var(--tertiary-bg);
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
 .toolbar-button i {
   font-size: 16px;
 }
@@ -75,5 +82,13 @@
 .leave-button:hover {
   background-color: var(--error-color);
   color: white;
+}
+
+.icon-button.small {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin-left: 4px;
+  border-radius: 4px;
 }
 

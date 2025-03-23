@@ -1,19 +1,7 @@
-:root {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  /* Add other dark theme variables */
-}
-
-[data-theme='light'] {
-  --background: 0 0% 98%;
-  --foreground: 240 10% 3.9%;
-  /* Add other light theme variables */
-}
-
 .landing-page {
   min-height: 100vh;
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  background-color: var(--primary-bg);
+  color: var(--primary-text);
   overflow-x: hidden;
 }
 
@@ -26,6 +14,11 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border-color);
+  transition: background-color var(--transition-normal);
+}
+
+body.light-mode .header {
+  background-color: rgba(255, 255, 255, 0.8);
 }
 
 .navbar {
@@ -33,17 +26,17 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 0;
-  background-color: hsl(var(--background));
+  transition: background-color var(--transition-normal);
 }
 
 .logo {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--primary-text);
-  text-decoration: none;
-  background: linear-gradient(90deg, #ffffff, #b3b3b3);
+  background: linear-gradient(90deg, var(--primary-text), var(--secondary-text));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  text-decoration: none;
+  transition: all var(--transition-normal);
 }
 
 .nav-actions {
@@ -55,7 +48,7 @@
 .theme-toggle {
   background: none;
   border: none;
-  color: hsl(var(--foreground));
+  color: var(--primary-text);
   font-size: 1.2rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -218,9 +211,10 @@
   font-weight: 800;
   line-height: 1.2;
   margin-bottom: 1.5rem;
-  background: linear-gradient(90deg, #ffffff, #b3b3b3);
+  background: linear-gradient(90deg, var(--primary-text), var(--secondary-text));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  transition: all var(--transition-normal);
 }
 
 .hero-subtitle {
@@ -425,6 +419,58 @@
   background-color: #0060df;
 }
 
+/* Features Section */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.feature-card {
+  background: var(--card-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+  transition: all var(--transition-normal);
+}
+
+.feature-card:hover {
+  transform: translateY(-10px);
+  border-color: var(--accent-color);
+  box-shadow: 0 10px 30px rgba(255, 59, 48, 0.2);
+}
+
+.feature-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(45deg, var(--accent-color), rgba(255, 59, 48, 0.8));
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  font-size: 1.5rem;
+  color: white;
+  box-shadow: 0 8px 16px rgba(255, 59, 48, 0.3);
+}
+
+.feature-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--primary-text);
+}
+
+.feature-card p {
+  color: var(--secondary-text);
+  line-height: 1.6;
+}
+
 /* Testimonials Section */
 .testimonials-section {
   padding: 6rem 0;
@@ -468,6 +514,12 @@
 .faq-section {
   padding: 6rem 0;
   background-color: rgba(0, 0, 0, 0.3);
+  transition: background-color var(--transition-normal);
+}
+
+/* Add light theme override */
+body.light-mode .faq-section {
+  background-color: var(--primary-bg);
 }
 
 .faq-grid {
@@ -498,11 +550,103 @@
   line-height: 1.6;
 }
 
+/* Blog Section */
+.blog-section {
+  padding: 6rem 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  transition: background-color var(--transition-normal);
+}
+
+/* Add light theme override for blog section */
+body.light-mode .blog-section {
+  background-color: var(--primary-bg);
+}
+
+.blog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+}
+
+.blog-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.blog-card {
+  background: var(--card-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+  transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+}
+
+.blog-card:hover {
+  transform: translateY(-10px);
+  border-color: var(--accent-color);
+  box-shadow: 0 10px 30px rgba(255, 59, 48, 0.2);
+}
+
+.blog-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--primary-text);
+  line-height: 1.4;
+}
+
+.blog-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: var(--secondary-text);
+}
+
+.blog-excerpt {
+  color: var(--secondary-text);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.blog-footer {
+  margin-top: auto;
+}
+
+.read-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent-color);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.read-more:hover {
+  opacity: 1;
+  gap: 0.75rem;
+}
+
 /* Footer */
 .footer {
   background-color: rgba(0, 0, 0, 0.5);
   padding: 4rem 0 2rem;
   border-top: 1px solid var(--border-color);
+  transition: background-color var(--transition-normal);
+}
+
+/* Add light theme override for footer */
+body.light-mode .footer {
+  background-color: var(--primary-bg);
 }
 
 .footer-content {
@@ -592,6 +736,12 @@
 }
 
 /* Responsive */
+@media (max-width: 1200px) {
+  .blog-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 1024px) {
   .hero-title {
     font-size: 3rem;
@@ -616,6 +766,12 @@
 
   .faq-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 992px) {
+  .blog-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -645,6 +801,12 @@
   .footer-bottom {
     flex-direction: column;
     text-align: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .blog-grid {
+    grid-template-columns: 1fr;
   }
 }
 

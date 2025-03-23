@@ -11,6 +11,7 @@ import Terminal from "../components/Terminal"
 import UserPresence from "../components/UserPresence"
 import "../styles/Editor.css"
 import { useAuth } from "../context/AuthContext"
+import CustomCursor from "../components/CustomCursor"
 
 const Editor = () => {
   const { roomId } = useParams()
@@ -21,22 +22,44 @@ const Editor = () => {
       id: "index.html",
       name: "index.html",
       language: "html",
-      value:
-        "<!DOCTYPE html>\n<html>\n<head>\n  <title>My Page</title>\n</head>\n<body>\n  <h1>Hello, World!</h1>\n</body>\n</html>",
+      value: `<!DOCTYPE html>
+<html>
+<head>
+  <title>My Page</title>
+</head>
+<body>
+  <h1>Hello, World!</h1>
+</body>
+</html>`,
     },
     {
       id: "styles.css",
       name: "styles.css",
       language: "css",
-      value:
-        "body {\n  font-family: Arial, sans-serif;\n  margin: 0;\n  padding: 20px;\n  background-color: #f5f5f5;\n}\n\nh1 {\n  color: #333;\n}",
+      value: `body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background-color: #f5f5f5;
+}
+
+h1 {
+  color: #333;
+}`,
     },
     {
       id: "script.js",
       name: "script.js",
       language: "javascript",
-      value:
-        'console.log("Hello, World!");\n\nfunction greet(name) {\n  return `Hello, ${name}!`;\n}\n\ndocument.addEventListener("DOMContentLoaded", () => {\n  console.log("DOM loaded");\n});',
+      value: `console.log("Hello, World!");
+
+function greet(name) {
+  return \`Hello, \${name}!\`;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM loaded");
+});`,
     },
   ])
   const [activeFile, setActiveFile] = useState(files[0])
@@ -44,9 +67,19 @@ const Editor = () => {
   const [isTerminalOpen, setIsTerminalOpen] = useState(false)
   const [terminalOutput, setTerminalOutput] = useState([])
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [isRunning, setIsRunning] = useState(false)
   const editorRef = useRef(null)
   const { currentUser } = useAuth()
   const username = currentUser?.displayName || currentUser?.email || "Anonymous"
+
+  // Enable custom cursor
+  useEffect(() => {
+    document.body.classList.add("custom-cursor-active")
+
+    return () => {
+      document.body.classList.remove("custom-cursor-active")
+    }
+  }, [])
 
   useEffect(() => {
     const socketInstance = io("http://localhost:5000", {
@@ -101,6 +134,11 @@ const Editor = () => {
 
     socketInstance.on("terminal-output", (output) => {
       setTerminalOutput((prev) => [...prev, output])
+      if (output.type === "command" && output.text === "Running code...") {
+        setIsRunning(true)
+      } else if (output.type === "output" || output.type === "error") {
+        setIsRunning(false)
+      }
     })
 
     socketInstance.on("disconnect", () => {
@@ -112,7 +150,7 @@ const Editor = () => {
     return () => {
       socketInstance.disconnect()
     }
-  }, [roomId, username, currentUser])
+  }, [roomId, username, currentUser, activeFile])
 
   const handleEditorDidMount = (editor) => {
     editorRef.current = editor
@@ -205,8 +243,28 @@ const Editor = () => {
     setIsPreviewOpen((prev) => !prev)
   }
 
+  // Function to get HTML content
+  const getHtmlContent = () => {
+    const htmlFile = files.find((f) => f.name.endsWith(".html"))
+    return htmlFile ? htmlFile.value : ""
+  }
+
+  // Function to get CSS content
+  const getCssContent = () => {
+    const cssFile = files.find((f) => f.name.endsWith(".css"))
+    return cssFile ? cssFile.value : ""
+  }
+
+  // Function to get JavaScript content
+  const getJsContent = () => {
+    const jsFile = files.find((f) => f.name.endsWith(".js"))
+    return jsFile ? jsFile.value : ""
+  }
+
   return (
     <div className="editor-container">
+      <CustomCursor />
+
       <Toolbar
         roomId={roomId}
         onRun={handleRunCode}
@@ -215,6 +273,7 @@ const Editor = () => {
         onLeaveRoom={handleLeaveRoom}
         isTerminalOpen={isTerminalOpen}
         isPreviewOpen={isPreviewOpen}
+        isRunning={isRunning}
       />
 
       <div className="editor-main">
@@ -273,11 +332,11 @@ const Editor = () => {
                   <!DOCTYPE html>
                   <html>
                     <head>
-                      <style>${files.find((f) => f.name.endsWith(".css"))?.value || ""}</style>
+                      <style>${getCssContent()}</style>
                     </head>
                     <body>
-                      ${files.find((f) => f.name.endsWith(".html"))?.value || ""}
-                      <script>${files.find((f) => f.name.endsWith(".js"))?.value || ""}</script>
+                      ${getHtmlContent()}
+                      <script>${getJsContent()}</script>
                     </body>
                   </html>
                 `}
