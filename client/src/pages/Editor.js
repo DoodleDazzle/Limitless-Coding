@@ -12,6 +12,8 @@ import UserPresence from "../components/UserPresence"
 import "../styles/Editor.css"
 import { useAuth } from "../context/AuthContext"
 import CustomCursor from "../components/CustomCursor"
+import { VscDebugStart, VscRun, VscSaveAll } from "react-icons/vsc"
+import DebugPanel from "../components/DebugPanel"
 
 const Editor = () => {
   const { roomId } = useParams()
@@ -71,6 +73,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const editorRef = useRef(null)
   const { currentUser } = useAuth()
   const username = currentUser?.displayName || currentUser?.email || "Anonymous"
+  const [theme, setTheme] = useState("vs-dark")
+  const [isDebugging, setIsDebugging] = useState(false)
+  const [breakpoints, setBreakpoints] = useState([])
+  const [terminals, setTerminals] = useState([{ id: 1, name: "Terminal 1" }])
+  const [activeTerminal, setActiveTerminal] = useState(1)
+  const [editorSettings, setEditorSettings] = useState({
+    fontSize: 14,
+    wordWrap: "on",
+    minimap: { enabled: true },
+    formatOnSave: true,
+  })
 
   // Enable custom cursor
   useEffect(() => {
@@ -236,7 +249,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const toggleTerminal = () => {
-    setIsTerminalOpen((prev) => !prev)
+    setIsTerminalOpen(prev => !prev)
+    if (!isTerminalOpen) {
+      setTerminalOutput([]) // Clear terminal output when opening
+    }
   }
 
   const togglePreview = () => {
@@ -261,6 +277,43 @@ document.addEventListener("DOMContentLoaded", () => {
     return jsFile ? jsFile.value : ""
   }
 
+  // Editor options
+  const editorOptions = {
+    ...editorSettings,
+    readOnly: isDebugging,
+    lineNumbers: "on",
+    roundedSelection: false,
+    scrollBeyondLastLine: false,
+    automaticLayout: true,
+  }
+
+  // Handle file operations
+  const handleSaveFile = () => {
+    if (!activeFile) return
+    // Implement save logic
+    socket?.emit("save-file", { roomId, fileId: activeFile.id, content: activeFile.value })
+  }
+
+  const handleDuplicateFile = (file) => {
+    const newFile = {
+      ...file,
+      id: Date.now().toString(),
+      name: `${file.name.split(".")[0]}_copy.${file.name.split(".")[1]}`,
+    }
+    setFiles(prev => [...prev, newFile])
+  }
+
+  const startDebugging = () => {
+    setIsDebugging(true)
+    socket?.emit("debug-start", { roomId, fileId: activeFile.id })
+  }
+
+  const runCode = () => {
+    if (!activeFile) return
+    setTerminalOutput(prev => [...prev, { type: "command", text: "Running code..." }])
+    socket?.emit("run-code", { roomId, fileId: activeFile.id, code: activeFile.value })
+  }
+
   return (
     <div className="editor-container">
       <CustomCursor />
@@ -274,6 +327,11 @@ document.addEventListener("DOMContentLoaded", () => {
         isTerminalOpen={isTerminalOpen}
         isPreviewOpen={isPreviewOpen}
         isRunning={isRunning}
+        onSave={handleSaveFile}
+        onDebug={startDebugging}
+        isDebugging={isDebugging}
+        theme={theme}
+        onThemeChange={setTheme}
       />
 
       <div className="editor-main">
@@ -284,6 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
           onCreateFile={handleCreateFile}
           onDeleteFile={handleDeleteFile}
           onRenameFile={handleRenameFile}
+          onDuplicateFile={handleDuplicateFile}
         />
 
         <div className="editor-content">
@@ -297,28 +356,8 @@ document.addEventListener("DOMContentLoaded", () => {
               height="100%"
               language={activeFile?.language || "javascript"}
               value={activeFile?.value || ""}
-              theme="vs-dark"
-              options={{
-                minimap: { enabled: true },
-                scrollBeyondLastLine: false,
-                fontFamily: "JetBrains Mono, Menlo, Monaco, Courier New, monospace",
-                fontSize: 14,
-                lineHeight: 1.5,
-                automaticLayout: true,
-                tabSize: 2,
-                wordWrap: "on",
-                suggestOnTriggerCharacters: true,
-                quickSuggestions: true,
-                scrollbar: {
-                  useShadows: false,
-                  verticalHasArrows: true,
-                  horizontalHasArrows: true,
-                  vertical: "visible",
-                  horizontal: "visible",
-                  verticalScrollbarSize: 12,
-                  horizontalScrollbarSize: 12,
-                },
-              }}
+              theme={theme}
+              options={editorOptions}
               onChange={handleEditorChange}
               onMount={handleEditorDidMount}
             />
@@ -346,10 +385,33 @@ document.addEventListener("DOMContentLoaded", () => {
               />
             </div>
           )}
+
+          {isDebugging && (
+            <DebugPanel
+              breakpoints={breakpoints}
+              onBreakpointChange={setBreakpoints}
+              isDebugging={isDebugging}
+              onStopDebugging={() => setIsDebugging(false)}
+            />
+          )}
         </div>
       </div>
 
-      {isTerminalOpen && <Terminal output={terminalOutput} onClose={() => setIsTerminalOpen(false)} />}
+      {isTerminalOpen && (
+        <Terminal 
+          output={terminalOutput}
+          onClose={toggleTerminal}
+          terminals={terminals}
+          activeTerminal={activeTerminal}
+          onTerminalCreate={() => {
+            setTerminals(prev => [...prev, { 
+              id: prev.length + 1, 
+              name: `Terminal ${prev.length + 1}` 
+            }])
+          }}
+          onTerminalSelect={setActiveTerminal}
+        />
+      )}
 
       <UserPresence users={users} />
     </div>

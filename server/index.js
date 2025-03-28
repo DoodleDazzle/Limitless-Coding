@@ -3,7 +3,7 @@ const http = require("http")
 const { Server } = require("socket.io")
 const cors = require("cors")
 const { v4: uuidv4 } = require("uuid")
-const { exec } = require("child_process")
+const { exec, execSync } = require("child_process")
 const fs = require("fs").promises
 const path = require("path")
 const os = require("os")
@@ -100,48 +100,82 @@ io.on("connection", (socket) => {
         await fs.writeFile(path.join(execDir, file.name), file.content)
       }
 
-      // Determine how to run the code based on file types
-      let command = ""
+      let command = "";
+      let env = process.env;
+
+      // Check for installed compilers/interpreters
+      const checkCommand = process.platform === 'win32' ? 'where' : 'which';
+      
       if (files.some((f) => f.name.endsWith(".html"))) {
-        // For HTML/CSS/JS, we'll just notify that preview is available
         io.to(roomId).emit("terminal-output", {
           type: "info",
           text: "HTML/CSS/JS detected. Use the Preview button to view the result.",
         })
         return
       } else if (files.some((f) => f.name.endsWith(".js"))) {
-        // For JavaScript files
-        const mainFile = files.find((f) => f.name.endsWith(".js")).name
-        command = `node "${path.join(execDir, mainFile)}"`
-      } else if (files.some((f) => f.name.endsWith(".py"))) {
-        // For Python files
-        const mainFile = files.find((f) => f.name.endsWith(".py")).name
-        command = `python "${path.join(execDir, mainFile)}"`
-      } else if (files.some((f) => f.name.endsWith(".cpp") || f.name.endsWith(".c"))) {
-        // For C/C++ files
-        const mainFile = files.find((f) => f.name.endsWith(".cpp") || f.name.endsWith(".c")).name
-        const outputFile = path.join(execDir, "output")
-
-        // Compile first
-        io.to(roomId).emit("terminal-output", { type: "info", text: "Compiling..." })
-
         try {
-          await new Promise((resolve, reject) => {
-            exec(`g++ "${path.join(execDir, mainFile)}" -o "${outputFile}"`, (error, stdout, stderr) => {
-              if (error) {
-                io.to(roomId).emit("terminal-output", { type: "error", text: stderr })
-                reject(error)
-                return
-              }
-              resolve()
-            })
-          })
-
-          // Then run
-          command = `"${outputFile}"`
+          execSync(`${checkCommand} node`);
+          const mainFile = files.find((f) => f.name.endsWith(".js")).name;
+          command = `node "${path.join(execDir, mainFile)}"`;
         } catch (error) {
-          // Compilation failed, no need to execute
-          return
+          io.to(roomId).emit("terminal-output", {
+            type: "error",
+            text: "Node.js is not installed or not in PATH. Please install Node.js from https://nodejs.org/ and make sure it's added to your PATH.",
+          });
+          return;
+        }
+      } else if (files.some((f) => f.name.endsWith(".py"))) {
+        try {
+          // Try python3 first, then python
+          try {
+            execSync(`${checkCommand} python3`);
+            const mainFile = files.find((f) => f.name.endsWith(".py")).name;
+            command = `python3 "${path.join(execDir, mainFile)}"`;
+          } catch {
+            execSync(`${checkCommand} python`);
+            const mainFile = files.find((f) => f.name.endsWith(".py")).name;
+            command = `python "${path.join(execDir, mainFile)}"`;
+          }
+        } catch (error) {
+          io.to(roomId).emit("terminal-output", {
+            type: "error",
+            text: "Python is not installed or not in PATH. Please install Python from https://www.python.org/ and make sure it's added to your PATH.",
+          });
+          return;
+        }
+      } else if (files.some((f) => f.name.endsWith(".cpp") || f.name.endsWith(".c"))) {
+        try {
+          execSync(`${checkCommand} g++`);
+          const mainFile = files.find((f) => f.name.endsWith(".cpp") || f.name.endsWith(".c")).name;
+          const outputFile = path.join(execDir, process.platform === 'win32' ? 'output.exe' : 'output');
+
+          // Compile with better error handling
+          try {
+            await new Promise((resolve, reject) => {
+              const compileCommand = `g++ "${path.join(execDir, mainFile)}" -o "${outputFile}"`;
+              exec(compileCommand, { cwd: execDir }, (error, stdout, stderr) => {
+                if (error) {
+                  io.to(roomId).emit("terminal-output", { 
+                    type: "error", 
+                    text: `Compilation error:\n${stderr}` 
+                  });
+                  reject(error);
+                  return;
+                }
+                resolve();
+              });
+            });
+
+            command = `"${outputFile}"`;
+          } catch (error) {
+            return;
+          }
+        } catch (error) {
+          io.to(roomId).emit("terminal-output", {
+            type: "error",
+            text: "G++ compiler is not installed or not in PATH. On Windows, install MinGW from https://mingw-w64.org/. On Linux, run 'sudo apt-get install build-essential'. Make sure it's added to your PATH.",
+          });
+          return;
         }
       } else {
         io.to(roomId).emit("terminal-output", {
@@ -151,30 +185,39 @@ io.on("connection", (socket) => {
         return
       }
 
-      // Execute the command
-      exec(command, { cwd: execDir }, (error, stdout, stderr) => {
-        if (error) {
-          io.to(roomId).emit("terminal-output", { type: "error", text: stderr })
-          return
-        }
-
-        if (stdout) {
-          io.to(roomId).emit("terminal-output", { type: "output", text: stdout })
-        }
-
-        if (stderr) {
-          io.to(roomId).emit("terminal-output", { type: "error", text: stderr })
-        }
-
-        // Clean up
-        setTimeout(async () => {
-          try {
-            await fs.rm(execDir, { recursive: true, force: true })
-          } catch (err) {
-            console.error("Error cleaning up temp directory:", err)
+      // Execute the command with timeout
+      if (command) {
+        const child = exec(command, { 
+          cwd: execDir,
+          env: env,
+          timeout: 10000 // 10 second timeout
+        }, (error, stdout, stderr) => {
+          if (error && error.killed) {
+            io.to(roomId).emit("terminal-output", { 
+              type: "error", 
+              text: "Execution timed out after 10 seconds" 
+            });
+            return;
           }
-        }, 5000)
-      })
+
+          if (stdout) {
+            io.to(roomId).emit("terminal-output", { type: "output", text: stdout });
+          }
+
+          if (stderr) {
+            io.to(roomId).emit("terminal-output", { type: "error", text: stderr });
+          }
+        });
+
+        // Clean up when done
+        child.on('exit', async () => {
+          try {
+            await fs.rm(execDir, { recursive: true, force: true });
+          } catch (err) {
+            console.error("Error cleaning up temp directory:", err);
+          }
+        });
+      }
     } catch (err) {
       console.error("Error running code:", err)
       io.to(roomId).emit("terminal-output", {

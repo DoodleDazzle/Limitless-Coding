@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app"
-import { getAuth } from "firebase/auth"
+import { getAuth, browserLocalPersistence } from "firebase/auth"
 import { getFirestore } from "firebase/firestore"
+import { getStorage } from "firebase/storage"
 
 export const actionCodeSettings = {
   url: process.env.REACT_APP_CONFIRMATION_EMAIL_REDIRECT,
@@ -20,6 +21,15 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
+auth.useDeviceLanguage();
+auth.settings.appVerificationDisabledForTesting = false;
+
+// Configure authentication persistence
+auth.setPersistence(browserLocalPersistence);
+
+// Configure multi-factor authentication if needed
+// auth.tenantId = 'YOUR_TENANT_ID';
+
 const db = getFirestore(app)
 
 export { auth, db }

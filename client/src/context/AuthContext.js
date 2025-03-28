@@ -12,6 +12,7 @@ import {
   sendPasswordResetEmail,
 } from "firebase/auth"
 import { auth } from "../firebase/config"
+import { validatePassword } from '../lib/security';
 
 const AuthContext = createContext()
 
@@ -21,10 +22,17 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [authError, setAuthError] = useState(null)
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [lockoutTime, setLockoutTime] = useState(null);
 
   // Sign up with email and password
   const signup = async (email, password) => {
     try {
+      const { isValid, errors } = validatePassword(password);
+      if (!isValid) {
+        setAuthError(errors.join('\n'));
+        return;
+      }
       setAuthError(null)
       const result = await createUserWithEmailAndPassword(auth, email, password)
       return result
@@ -37,11 +45,23 @@ export const AuthProvider = ({ children }) => {
 
   // Login with email and password
   const login = async (email, password) => {
+    if (lockoutTime && new Date() < lockoutTime) {
+      const remainingTime = Math.ceil((lockoutTime - new Date()) / 1000 / 60);
+      throw new Error(`Too many login attempts. Try again in ${remainingTime} minutes`);
+    }
+
     try {
       setAuthError(null)
       const result = await signInWithEmailAndPassword(auth, email, password)
+      setLoginAttempts(0);
       return result
     } catch (error) {
+      setLoginAttempts(prev => prev + 1);
+      if (loginAttempts >= 4) { // Lock after 5 failed attempts
+        const lockoutDate = new Date();
+        lockoutDate.setMinutes(lockoutDate.getMinutes() + 15);
+        setLockoutTime(lockoutDate);
+      }
       console.error("Login error:", error)
       setAuthError(formatAuthError(error))
       throw error
@@ -124,6 +144,17 @@ export const AuthProvider = ({ children }) => {
 
     return unsubscribe
   }, [])
+
+  // Add session timeout
+  useEffect(() => {
+    if (currentUser) {
+      const sessionTimeout = setTimeout(() => {
+        logout();
+      }, 1000 * 60 * 60); // 1 hour session timeout
+
+      return () => clearTimeout(sessionTimeout);
+    }
+  }, [currentUser]);
 
   const value = {
     currentUser,
