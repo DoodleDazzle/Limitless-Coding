@@ -22,6 +22,9 @@ const io = new Server(server, {
 // Store rooms and their users
 const rooms = new Map()
 
+// Store file contents for each room
+const fileContents = new Map()
+
 // Temporary directory for code execution
 const tempDir = path.join(os.tmpdir(), "codecollab")
 
@@ -58,6 +61,14 @@ io.on("connection", (socket) => {
     userId: userId || socketId, // Use Firebase UID if available, otherwise socket ID
   })
 
+  // Send current file contents to the new user if available
+  if (fileContents.has(roomId)) {
+    const roomFiles = fileContents.get(roomId);
+    roomFiles.forEach((value, fileId) => {
+      socket.emit("file-change", { fileId, value });
+    });
+  }
+
   // Broadcast updated user list to all clients in the room
   io.to(roomId).emit(
     "room-users",
@@ -69,12 +80,38 @@ io.on("connection", (socket) => {
 
   // Handle file changes
   socket.on("file-change", ({ roomId, fileId, value }) => {
+    // Store the value temporarily for new users who join later
+    if (!fileContents) {
+      fileContents = new Map();
+    }
+    
+    // Keep track of the latest content for each file
+    if (!fileContents.has(roomId)) {
+      fileContents.set(roomId, new Map());
+    }
+    
+    // Only update if there's actual value (some operations might not have content)
+    if (value !== null && value !== undefined) {
+      fileContents.get(roomId).set(fileId, value);
+    }
+
     // Broadcast to all other clients in the room
     socket.to(roomId).emit("file-change", { fileId, value })
   })
 
   // Handle new file creation
   socket.on("new-file", ({ roomId, file }) => {
+    // Store the file content for new users
+    if (!fileContents) {
+      fileContents = new Map();
+    }
+    
+    if (!fileContents.has(roomId)) {
+      fileContents.set(roomId, new Map());
+    }
+    
+    fileContents.get(roomId).set(file.id, file.value);
+    
     socket.to(roomId).emit("new-file", file)
   })
 
@@ -238,6 +275,12 @@ io.on("connection", (socket) => {
       // If room is empty, remove it
       if (rooms.get(roomId).size === 0) {
         rooms.delete(roomId)
+        
+        // Also clean up the file contents for this room
+        if (fileContents && fileContents.has(roomId)) {
+          fileContents.delete(roomId);
+          console.log(`Cleaned up file contents for empty room ${roomId}`);
+        }
       } else {
         // Broadcast updated user list
         io.to(roomId).emit(

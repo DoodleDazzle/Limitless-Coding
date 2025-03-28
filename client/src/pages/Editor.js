@@ -12,8 +12,8 @@ import UserPresence from "../components/UserPresence"
 import "../styles/Editor.css"
 import { useAuth } from "../context/AuthContext"
 import CustomCursor from "../components/CustomCursor"
-import { VscDebugStart, VscRun, VscSaveAll } from "react-icons/vsc"
 import DebugPanel from "../components/DebugPanel"
+import { websocketService } from '../services/websocket'
 
 const Editor = () => {
   const { roomId } = useParams()
@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const [breakpoints, setBreakpoints] = useState([])
   const [terminals, setTerminals] = useState([{ id: 1, name: "Terminal 1" }])
   const [activeTerminal, setActiveTerminal] = useState(1)
-  const [editorSettings, setEditorSettings] = useState({
+  const [editorSettings] = useState({
     fontSize: 14,
     wordWrap: "on",
     minimap: { enabled: true },
@@ -95,23 +95,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }, [])
 
   useEffect(() => {
-    const socketInstance = io("http://localhost:5000", {
-      query: {
-        roomId,
-        username,
-        userId: currentUser?.uid || "anonymous-user",
-      },
-    })
+    websocketService.connect(roomId, username, currentUser?.uid || "anonymous-user")
 
-    socketInstance.on("connect", () => {
-      console.log("Connected to server")
-    })
-
-    socketInstance.on("room-users", (roomUsers) => {
+    websocketService.on("room-users", (roomUsers) => {
       setUsers(roomUsers)
     })
 
-    socketInstance.on("file-change", ({ fileId, value }) => {
+    websocketService.on("file-change", ({ fileId, value }) => {
       setFiles((prevFiles) => prevFiles.map((file) => (file.id === fileId ? { ...file, value } : file)))
 
       if (activeFile.id === fileId && editorRef.current) {
@@ -123,11 +113,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     })
 
-    socketInstance.on("new-file", (file) => {
+    websocketService.on("new-file", (file) => {
       setFiles((prevFiles) => [...prevFiles, file])
     })
 
-    socketInstance.on("delete-file", (fileId) => {
+    websocketService.on("delete-file", (fileId) => {
       setFiles((prevFiles) => {
         const updatedFiles = prevFiles.filter((file) => file.id !== fileId)
         if (activeFile.id === fileId && updatedFiles.length > 0) {
@@ -141,11 +131,11 @@ document.addEventListener("DOMContentLoaded", () => {
       })
     })
 
-    socketInstance.on("rename-file", ({ fileId, newName }) => {
+    websocketService.on("rename-file", ({ fileId, newName }) => {
       setFiles((prevFiles) => prevFiles.map((file) => (file.id === fileId ? { ...file, name: newName } : file)))
     })
 
-    socketInstance.on("terminal-output", (output) => {
+    websocketService.on("terminal-output", (output) => {
       setTerminalOutput((prev) => [...prev, output])
       if (output.type === "command" && output.text === "Running code...") {
         setIsRunning(true)
@@ -154,37 +144,75 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     })
 
-    socketInstance.on("disconnect", () => {
+    websocketService.on("disconnect", () => {
       console.log("Disconnected from server")
     })
 
-    setSocket(socketInstance)
+    setSocket(websocketService)
 
     return () => {
-      socketInstance.disconnect()
+      websocketService.disconnect()
     }
   }, [roomId, username, currentUser, activeFile])
 
   const handleEditorDidMount = (editor) => {
     editorRef.current = editor
+    
+    // Setup Yjs binding when editor mounts if we have an active file
+    if (activeFile) {
+      try {
+        const binding = websocketService.setupEditorBinding(activeFile.id, editor);
+        // If binding failed (returns null), we'll fallback to Socket.IO
+        if (!binding) {
+          console.log('Using Socket.IO fallback for synchronization');
+        }
+      } catch (error) {
+        console.error('Failed to set up editor binding:', error);
+      }
+    }
   }
 
   const handleEditorChange = (value) => {
     if (!socket || !activeFile) return
 
     // Update local state
-    setFiles((prevFiles) => prevFiles.map((file) => (file.id === activeFile.id ? { ...file, value } : file)))
-
-    // Send to server
-    socket.emit("file-change", {
-      roomId,
-      fileId: activeFile.id,
-      value,
-    })
+    setFiles((prevFiles) => prevFiles.map((file) => 
+      file.id === activeFile.id ? { ...file, value } : file
+    ))
+    
+    // Check if bindings map exists and if this file has a binding
+    const hasBinding = websocketService.bindings && 
+                      typeof websocketService.bindings.has === 'function' && 
+                      websocketService.bindings.has(activeFile.id);
+                      
+    // If no Yjs binding exists, fall back to socket.io
+    if (!hasBinding) {
+      websocketService.handleFileChange(activeFile.id, value, {
+        type: 'insert',
+        position: editorRef.current.getPosition(),
+        length: value.length - (editorRef.current.getValue()?.length || 0)
+      });
+    }
   }
 
   const handleFileSelect = (file) => {
     setActiveFile(file)
+    
+    // When switching files, set up Yjs binding for the new file
+    if (editorRef.current) {
+      try {
+        setTimeout(() => {
+          try {
+            // Small timeout to ensure the editor model has changed
+            websocketService.setupEditorBinding(file.id, editorRef.current);
+          } catch (innerError) {
+            console.error('Error setting up editor binding after delay:', innerError);
+          }
+        }, 50);
+      } catch (error) {
+        console.error('Error scheduling binding setup:', error);
+      }
+    }
   }
 
   const handleCreateFile = (fileName, language = "javascript") => {
@@ -199,7 +227,13 @@ document.addEventListener("DOMContentLoaded", () => {
     setActiveFile(newFile)
 
     if (socket) {
-      socket.emit("new-file", { roomId, file: newFile })
+      websocketService.handleFileChange(newFile.id, newFile.value, {
+        type: 'new-file',
+        name: fileName,
+        language,
+        position: 0,
+        length: 0
+      })
     }
   }
 
@@ -220,7 +254,11 @@ document.addEventListener("DOMContentLoaded", () => {
     })
 
     if (socket) {
-      socket.emit("delete-file", { roomId, fileId })
+      websocketService.handleFileChange(fileId, null, {
+        type: 'delete',
+        position: 0,
+        length: 0
+      })
     }
   }
 
@@ -228,19 +266,45 @@ document.addEventListener("DOMContentLoaded", () => {
     setFiles((prev) => prev.map((file) => (file.id === fileId ? { ...file, name: newName } : file)))
 
     if (socket) {
-      socket.emit("rename-file", { roomId, fileId, newName })
+      websocketService.handleFileChange(fileId, files.find(f => f.id === fileId).value, {
+        type: 'rename',
+        newName: newName
+      })
     }
   }
 
   const handleRunCode = () => {
-    setIsTerminalOpen(true)
-    setTerminalOutput((prev) => [...prev, { type: "command", text: "Running code..." }])
+    setIsTerminalOpen(true);
+    setTerminalOutput((prev) => [...prev, { type: "command", text: "Running code..." }]);
 
     if (socket) {
+      // Get latest file content from the current state
+      const currentFiles = files.map((f) => {
+        try {
+          // Safely check if bindings exists and has proper has method
+          const hasBinding = websocketService.bindings && 
+                            typeof websocketService.bindings.has === 'function' && 
+                            websocketService.bindings.has(f.id);
+                            
+          // If there's a binding for this file, get the latest content from the editor
+          if (hasBinding && f.id === activeFile.id && editorRef.current) {
+            return { 
+              name: f.name, 
+              content: editorRef.current.getValue() 
+            };
+          }
+        } catch (err) {
+          console.error('Error checking bindings:', err);
+        }
+        
+        // Fallback to using stored state value
+        return { name: f.name, content: f.value };
+      });
+      
       socket.emit("run-code", {
         roomId,
-        files: files.map((f) => ({ name: f.name, content: f.value })),
-      })
+        files: currentFiles
+      });
     }
   }
 
@@ -291,7 +355,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const handleSaveFile = () => {
     if (!activeFile) return
     // Implement save logic
-    socket?.emit("save-file", { roomId, fileId: activeFile.id, content: activeFile.value })
+    websocketService.handleFileChange(activeFile.id, activeFile.value, {
+      type: 'save',
+      position: 0,
+      length: 0
+    })
   }
 
   const handleDuplicateFile = (file) => {
@@ -305,14 +373,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const startDebugging = () => {
     setIsDebugging(true)
-    socket?.emit("debug-start", { roomId, fileId: activeFile.id })
+    websocketService.handleFileChange(activeFile.id, null, {
+      type: 'debug-start',
+      position: 0,
+      length: 0
+    })
   }
 
-  const runCode = () => {
-    if (!activeFile) return
-    setTerminalOutput(prev => [...prev, { type: "command", text: "Running code..." }])
-    socket?.emit("run-code", { roomId, fileId: activeFile.id, code: activeFile.value })
-  }
+  // Removed unused runCode function
 
   return (
     <div className="editor-container">
@@ -419,4 +487,3 @@ document.addEventListener("DOMContentLoaded", () => {
 }
 
 export default Editor
-
