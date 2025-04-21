@@ -1,7 +1,6 @@
 import { initializeApp } from "firebase/app"
 import { getAuth, browserLocalPersistence } from "firebase/auth"
 import { getFirestore } from "firebase/firestore"
-import { getStorage } from "firebase/storage"
 
 export const actionCodeSettings = {
   url: process.env.REACT_APP_CONFIRMATION_EMAIL_REDIRECT,

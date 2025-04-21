@@ -4,9 +4,11 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import "../styles/Sidebar.css"
 
-const Sidebar = ({ files, activeFile, onFileSelect, onCreateFile, onDeleteFile, onRenameFile }) => {
+const Sidebar = ({ files, activeFile, onFileSelect, onCreateFile, onCreateFolder, onDeleteFile, onRenameFile }) => {
   const [isCreatingFile, setIsCreatingFile] = useState(false)
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false)
   const [newFileName, setNewFileName] = useState("")
+  const [newFolderName, setNewFolderName] = useState("")
   const [editingFileId, setEditingFileId] = useState(null)
   const [editingFileName, setEditingFileName] = useState("")
 
@@ -36,6 +38,19 @@ const Sidebar = ({ files, activeFile, onFileSelect, onCreateFile, onDeleteFile, 
     setIsCreatingFile(false)
   }
 
+  const handleCreateFolder = () => {
+    setIsCreatingFolder(true)
+    setNewFolderName("")
+  }
+
+  const handleCreateFolderSubmit = (e) => {
+    e.preventDefault()
+    if (!newFolderName.trim()) return
+
+    onCreateFolder(newFolderName)
+    setIsCreatingFolder(false)
+  }
+
   const handleStartRename = (file) => {
     setEditingFileId(file.id)
     setEditingFileName(file.name)
@@ -49,20 +64,22 @@ const Sidebar = ({ files, activeFile, onFileSelect, onCreateFile, onDeleteFile, 
     setEditingFileId(null)
   }
 
-  const getFileIcon = (fileName) => {
-    const extension = fileName.split(".").pop()
+  const getFileIcon = (fileName, isFolder = false) => {
+    if (isFolder) return "📁"; // Folder icon
 
-    if (extension === "html") return "🌐"
-    if (extension === "css") return "🎨"
-    if (extension === "js") return "📜"
-    if (extension === "jsx") return "⚛️"
-    if (extension === "ts" || extension === "tsx") return "📘"
-    if (extension === "json") return "📋"
-    if (extension === "md") return "📝"
-    if (extension === "py") return "🐍"
-    if (extension === "c" || extension === "cpp" || extension === "h") return "⚙️"
+    const extension = fileName.split(".").pop();
 
-    return "📄"
+    if (extension === "html") return "🌐";
+    if (extension === "css") return "🎨";
+    if (extension === "js") return "📜";
+    if (extension === "jsx") return "⚛️";
+    if (extension === "ts" || extension === "tsx") return "📘";
+    if (extension === "json") return "📋";
+    if (extension === "md") return "📝";
+    if (extension === "py") return "🐍";
+    if (extension === "c" || extension === "cpp" || extension === "h") return "⚙️";
+
+    return "📄";
   }
 
   return (
@@ -73,9 +90,12 @@ const Sidebar = ({ files, activeFile, onFileSelect, onCreateFile, onDeleteFile, 
       transition={{ duration: 0.3 }}
     >
       <div className="sidebar-header">
-        <h3>Files</h3>
+        
         <button className="icon-button" onClick={handleCreateFile} title="Create new file">
-          <i className="fas fa-plus"></i>
+          <i className="fas fa-plus"></i> File
+        </button>
+        <button className="icon-button" onClick={handleCreateFolder} title="Create new folder">
+          <i className="fas fa-folder-plus"></i> Folder
         </button>
       </div>
 
@@ -95,7 +115,7 @@ const Sidebar = ({ files, activeFile, onFileSelect, onCreateFile, onDeleteFile, 
             ) : (
               <>
                 <div className="file-name" onClick={() => onFileSelect(file)}>
-                  <span className="file-icon">{getFileIcon(file.name)}</span>
+                  <span className="file-icon">{getFileIcon(file.name, file.type === "folder")}</span>
                   {file.name}
                 </div>
                 <div className="file-actions">
@@ -120,6 +140,18 @@ const Sidebar = ({ files, activeFile, onFileSelect, onCreateFile, onDeleteFile, 
               placeholder="filename.ext"
               autoFocus
               onBlur={() => setIsCreatingFile(false)}
+            />
+          </form>
+        )}
+        {isCreatingFolder && (
+          <form onSubmit={handleCreateFolderSubmit} className="new-folder-form">
+            <input
+              type="text"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              placeholder="foldername"
+              autoFocus
+              onBlur={() => setIsCreatingFolder(false)}
             />
           </form>
         )}

@@ -91,6 +91,14 @@ const LandingPage = () => {
       date: "January 10, 2025",
       image: "/blog-3.jpg",
     },
+    {
+      id: 4,
+      title: "10 Tips for Effective Remote Collaboration in Coding Projects",
+      excerpt: "Discover practical tips to enhance collaboration and productivity in remote coding teams...",
+      author: "Alex Johnson",
+      date: "March 5, 2025",
+      image: "/blog-4.jpg",
+    },
   ]
 
   return (

@@ -571,8 +571,8 @@ body.light-mode .blog-section {
 
 .blog-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Adjusted for responsive spacing */
+  gap: 1.5rem; /* Consistent spacing between blog cards */
   margin-top: 2rem;
 }
 

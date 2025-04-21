@@ -8,6 +8,7 @@ import ForgotPassword from "./pages/ForgotPassword"
 import CreateRoom from "./pages/CreateRoom"
 import JoinRoom from "./pages/JoinRoom"
 import Editor from "./pages/Editor"
+import BlogPage from "./pages/BlogPage"
 import "./App.css"
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+            <Route path="/blog/:id" element={<BlogPage />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>

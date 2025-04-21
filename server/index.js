@@ -115,6 +115,16 @@ io.on("connection", (socket) => {
     socket.to(roomId).emit("new-file", file)
   })
 
+  // Handle folder creation
+  socket.on("new-folder", ({ roomId, folder }) => {
+    if (!fileContents.has(roomId)) {
+      fileContents.set(roomId, new Map());
+    }
+  
+    fileContents.get(roomId).set(folder.id, folder);
+    socket.to(roomId).emit("new-folder", folder);
+  });
+
   // Handle file deletion
   socket.on("delete-file", ({ roomId, fileId }) => {
     socket.to(roomId).emit("delete-file", fileId)

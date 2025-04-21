@@ -26,7 +26,7 @@ class WebSocketService {
     this.userId = userId;
 
     // Setup Socket.IO connection - this is our reliable fallback
-    const serverUrl = process.env.REACT_APP_SOCKET_SERVER || 'http://localhost:5000';
+    const serverUrl = process.env.REACT_APP_SOCKET_SERVER || 'https://code-ijfg.onrender.com';
     this.socket = io(serverUrl, {
       query: { roomId, username, userId },
     });
